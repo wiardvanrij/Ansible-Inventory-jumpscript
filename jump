@@ -1,0 +1,27 @@
+#!/bin/bash
+
+DIR=/your/ansible/location
+string=()
+
+# input
+SEARCH=$1
+
+# Search the host_vars dir for your search query. Then return the contents of the file based on the tag 'name'
+# Set the hostname (ea the files name) to so we can jump towards it later.
+while read -r line; do
+  string+=($line "$(grep 'name:' $DIR/host_vars/$line | tr -d '\n';)" )
+done < <( grep -lr $SEARCH $DIR/host_vars | rev | cut -d"/" -f1 | rev | sort )
+
+# Create a dialog menu
+HOST=$(dialog --menu "Pick the server you want to jump to:"  60 160 60  "${string[@]}"  3>&2 2>&1 1>&3)
+
+clear
+
+if [ $? -eq 0 ]; then
+    if [[ $HOST != '' ]]; then
+        # Selected a host, SSH to it with your current username.
+    		ssh $USER@$HOST
+    	else
+    		echo "Canceled";
+    	fi
+fi
